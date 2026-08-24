@@ -10,10 +10,13 @@ import {
 } from "./generateLots";
 import {
   LOTE_MATRIZ,
+  OASIS,
   RING,
   SVG_VIEW,
   VERTICES,
   INSET_RING,
+  fromA,
+  oasisArea,
   polyToSvg,
 } from "./loteMatriz";
 import { cn } from "./cn";
@@ -27,6 +30,11 @@ const STATUS_LABEL: Record<ResidentialLot["status"], string> = {
 
 function sy(y: number) {
   return -y;
+}
+
+function bay(s: number, t0: number, t1: number) {
+  const p = [fromA(s, t0), fromA(s + 16, t0), fromA(s + 16, t1), fromA(s, t1)];
+  return polyToSvg(p);
 }
 
 export function MasterplanView() {
@@ -58,17 +66,23 @@ export function MasterplanView() {
     { from: VERTICES.D, to: VERTICES.A, label: `${LOTE_MATRIZ.sides.DA.toFixed(2)} m` },
   ];
 
+  const welcome = fromA(22, -28);
+  const portico = fromA(16, 0);
+  const lobby = fromA(22, 28);
+  const dropL = fromA(10, -12);
+  const dropR = fromA(10, 12);
+
   return (
     <div className="relative h-dvh overflow-hidden bg-sand text-ink">
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-3 p-3 sm:p-4">
         <div className="pointer-events-auto max-w-md rounded-2xl border border-line bg-paper/95 px-4 py-3 shadow-sm backdrop-blur">
           <p className="font-display text-xl font-semibold leading-none tracking-tight sm:text-2xl">Moon Paracas</p>
-          <p className="mt-1 text-xs text-muted">Masterplan oficial · Lote Matriz UTM 18S · 4 aldeas + oasis</p>
+          <p className="mt-1 text-xs text-muted">Masterplan director · UTM 18S · 4 aldeas · oasis 20.662 m²</p>
         </div>
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-2 text-[11px] font-medium">
             <Compass className="h-3.5 w-3.5 text-clay" />
-            Norte UTM
+            Norte UTM · C
           </span>
           <button
             type="button"
@@ -128,20 +142,20 @@ export function MasterplanView() {
         <rect x={SVG_VIEW.minX} y={SVG_VIEW.minY} width={SVG_VIEW.width} height={SVG_VIEW.height} fill="#efe6d6" />
 
         {grid
-          ? Array.from({ length: 24 }, (_, i) => {
-              const y = -280 + i * 50;
-              const x = -180 + i * 50;
+          ? Array.from({ length: 26 }, (_, i) => {
+              const y = -300 + i * 50;
+              const x = -260 + i * 50;
               return (
                 <g key={i} stroke="#d7cbb8" strokeWidth="0.4">
-                  <line x1={-180} y1={sy(y)} x2={240} y2={sy(y)} />
-                  <line x1={x} y1={sy(-280)} x2={x} y2={sy(280)} />
+                  <line x1={-260} y1={sy(y)} x2={280} y2={sy(y)} />
+                  <line x1={x} y1={sy(-300)} x2={x} y2={sy(320)} />
                 </g>
               );
             })
           : null}
 
         <path d={polyToSvg(RING)} fill="#e6d9c4" stroke="#a84f36" strokeWidth="2.4" />
-        <path d={polyToSvg(INSET_RING)} fill="#efe4d1" stroke="#c5a059" strokeWidth="1.1" fillOpacity="0.55" />
+        <path d={polyToSvg(INSET_RING)} fill="#efe4d1" stroke="#c5a059" strokeWidth="1.1" fillOpacity="0.45" />
 
         {lots.map((l) => {
           const meta = ALDEA_META[l.aldea];
@@ -181,10 +195,9 @@ export function MasterplanView() {
           );
         })}
 
-        {/* Oasis */}
-        <ellipse cx="0" cy="0" rx="54" ry="48" fill="#d9c9a8" opacity="0.9" />
+        <ellipse cx={OASIS.x} cy={sy(OASIS.y)} rx={OASIS.rx} ry={OASIS.ry} fill="#cbb892" opacity="0.92" />
         <path d={polyToSvg(lagoon)} fill="url(#lagoon)" stroke="#9ee0db" strokeWidth="1.2" filter="url(#soft)" />
-        <ellipse cx="8" cy={sy(10)} rx="14" ry="7" fill="#ffffff" opacity="0.18" />
+        <ellipse cx="8" cy={sy(10)} rx="16" ry="8" fill="#ffffff" opacity="0.16" />
 
         {palms.map((p, i) => (
           <g key={i} transform={`translate(${p.x} ${sy(p.y)})`}>
@@ -203,90 +216,23 @@ export function MasterplanView() {
               setLot(null);
             }}
           >
-            <rect x="-22" y="-7" width="44" height="14" rx="7" fill="#161310" />
-            <text
-              textAnchor="middle"
-              y="3.2"
-              fill="#f4eee4"
-              fontSize="4.6"
-              fontFamily="Outfit, sans-serif"
-              fontWeight="600"
-            >
+            <rect x="-20" y="-6" width="40" height="12" rx="6" fill="#161310" />
+            <text textAnchor="middle" y="2.8" fill="#f4eee4" fontSize="4.2" fontFamily="Outfit, sans-serif" fontWeight="600">
               {a.shortLabel}
             </text>
           </g>
         ))}
 
-        {/* South gate */}
         <g>
-          <rect
-            x={VERTICES.A.x - 70}
-            y={sy(VERTICES.A.y + 52)}
-            width="58"
-            height="22"
-            rx="2"
-            fill="#4a5560"
-            stroke="#2c333a"
-            strokeWidth="0.6"
-          />
-          <rect
-            x={VERTICES.A.x + 12}
-            y={sy(VERTICES.A.y + 52)}
-            width="58"
-            height="22"
-            rx="2"
-            fill="#4a5560"
-            stroke="#2c333a"
-            strokeWidth="0.6"
-          />
-          {Array.from({ length: 8 }, (_, i) => (
-            <g key={i}>
-              <line
-                x1={VERTICES.A.x - 68 + i * 7}
-                y1={sy(VERTICES.A.y + 52)}
-                x2={VERTICES.A.x - 68 + i * 7}
-                y2={sy(VERTICES.A.y + 30)}
-                stroke="#d7dde2"
-                strokeWidth="0.35"
-              />
-              <line
-                x1={VERTICES.A.x + 14 + i * 7}
-                y1={sy(VERTICES.A.y + 52)}
-                x2={VERTICES.A.x + 14 + i * 7}
-                y2={sy(VERTICES.A.y + 30)}
-                stroke="#d7dde2"
-                strokeWidth="0.35"
-              />
-            </g>
-          ))}
-          <rect
-            x={VERTICES.A.x - 48}
-            y={sy(VERTICES.A.y + 28)}
-            width="28"
-            height="14"
-            rx="1.5"
-            fill="#c5a059"
-            stroke="#8d7030"
-          />
-          <rect
-            x={VERTICES.A.x - 14}
-            y={sy(VERTICES.A.y + 22)}
-            width="28"
-            height="16"
-            rx="1.5"
-            fill="#161310"
-            stroke="#c5a059"
-            strokeWidth="1"
-          />
-          <rect
-            x={VERTICES.A.x + 20}
-            y={sy(VERTICES.A.y + 28)}
-            width="28"
-            height="14"
-            rx="1.5"
-            fill="#c5a059"
-            stroke="#8d7030"
-          />
+          <path d={bay(28, -58, -32)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
+          <path d={bay(28, -30, -8)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
+          <path d={bay(28, 8, 30)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
+          <path d={bay(28, 32, 58)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
+          <rect x={welcome.x - 10} y={sy(welcome.y) - 6} width="20" height="12" rx="1.4" fill="#c5a059" stroke="#8d7030" />
+          <rect x={portico.x - 11} y={sy(portico.y) - 8} width="22" height="16" rx="1.6" fill="#161310" stroke="#c5a059" strokeWidth="1" />
+          <rect x={lobby.x - 10} y={sy(lobby.y) - 6} width="20" height="12" rx="1.4" fill="#c5a059" stroke="#8d7030" />
+          <circle cx={dropL.x} cy={sy(dropL.y)} r="6" fill="none" stroke="#4e6646" strokeWidth="0.7" />
+          <circle cx={dropR.x} cy={sy(dropR.y)} r="6" fill="none" stroke="#4e6646" strokeWidth="0.7" />
           {AMENITIES.filter((a) => a.category === "acceso" || a.category === "estacionamiento").map((a) => (
             <g
               key={a.id}
@@ -297,14 +243,7 @@ export function MasterplanView() {
                 setLot(null);
               }}
             >
-              <text
-                textAnchor="middle"
-                y="0"
-                fill="#f4eee4"
-                fontSize="4.2"
-                fontFamily="Outfit, sans-serif"
-                fontWeight="600"
-              >
+              <text textAnchor="middle" y="0" fill="#161310" fontSize="4.1" fontFamily="Outfit, sans-serif" fontWeight="700">
                 {a.shortLabel}
               </text>
             </g>
@@ -327,14 +266,7 @@ export function MasterplanView() {
         {Object.values(VERTICES).map((v) => (
           <g key={v.label} transform={`translate(${v.x} ${sy(v.y)})`}>
             <circle r="6.5" fill="#161310" stroke="#c5a059" strokeWidth="1.1" />
-            <text
-              textAnchor="middle"
-              y="3.2"
-              fill="#f4eee4"
-              fontSize="7"
-              fontFamily="Cormorant Garamond, serif"
-              fontWeight="700"
-            >
+            <text textAnchor="middle" y="3.2" fill="#f4eee4" fontSize="7" fontFamily="Cormorant Garamond, serif" fontWeight="700">
               {v.label}
             </text>
           </g>
@@ -342,12 +274,12 @@ export function MasterplanView() {
       </svg>
 
       {hud ? (
-        <aside className="absolute bottom-3 left-3 z-20 w-[min(100%-1.5rem,360px)] rounded-2xl border border-line bg-paper/95 p-4 shadow-lg backdrop-blur sm:bottom-4 sm:left-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Inventario · UTM 18S</p>
+        <aside className="absolute bottom-3 left-3 z-20 w-[min(100%-1.5rem,380px)] rounded-2xl border border-line bg-paper/95 p-4 shadow-lg backdrop-blur sm:bottom-4 sm:left-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Inventario · programa 3D</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <Stat k="Lotes" v={String(counts.total)} />
-            <Stat k="Área matriz" v={`${LOTE_MATRIZ.areaM2.toLocaleString("es-PE")} m²`} />
-            <Stat k="Perímetro" v={`${LOTE_MATRIZ.perimeterM} ml`} />
+            <Stat k="Lotes" v={`${counts.total}/384`} />
+            <Stat k="Oasis" v={`${Math.round(oasisArea()).toLocaleString("es-PE")} m²`} />
+            <Stat k="Cocheras" v="192" />
           </div>
           <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-[10px]">
             {([1, 2, 3, 4] as Aldea[]).map((id) => (
@@ -360,9 +292,11 @@ export function MasterplanView() {
           </div>
           <p className="mt-3 text-[11px] text-muted">
             Premium {counts.byType["premium-oasis"]} · Zen {counts.byType.zen} · Ajuste {counts.byType.ajuste} · Std{" "}
-            {counts.byType.standard}
+            {counts.byType.standard} · {counts.n120}×120 · {counts.n240}×240
           </p>
-          <p className="mt-1 text-[10px] text-olive">Ø8 exclusivo en 240 m² · perímetro real A-B-C-D</p>
+          <p className="mt-1 text-[10px] text-olive">
+            8×15 m · vías 6 m · pirca 10 m · ×8 solo en 240 · predio {LOTE_MATRIZ.areaM2.toLocaleString("es-PE")} m²
+          </p>
         </aside>
       ) : null}
 
@@ -379,9 +313,7 @@ export function MasterplanView() {
                 </>
               ) : (
                 <>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    {amenity?.categoryLabel}
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{amenity?.categoryLabel}</p>
                   <h2 className="font-display text-2xl font-semibold">{amenity?.name}</h2>
                 </>
               )}
@@ -403,6 +335,7 @@ export function MasterplanView() {
               <Row k="Estado" v={STATUS_LABEL[lot.status]} />
               <Row k="Tipología" v={lot.typology} />
               <Row k="Área" v={`${lot.areaM2} m²`} />
+              <Row k="Frente / fondo" v={`${lot.widthM} × ${lot.depthM} m`} />
               <Row k="Domos" v={lot.compatibleDomes.map((d) => `Ø${d}`).join(" · ")} />
               <Row k="Precio" v={`US$ ${lot.priceUSD.toLocaleString("en-US")}`} />
             </div>
