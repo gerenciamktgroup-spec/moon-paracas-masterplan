@@ -1,18 +1,19 @@
 import {
   type Vec,
-  VERTICES,
   GATE,
-  centroid,
-  dist,
-  inOasis,
+  HALF,
   INSET_RING,
   LOT_DEPTH,
   LOT_FRONT,
   LOT_GAP,
+  PERIMETER_SETBACK,
+  SERVICE_Y,
   STREET,
+  centroid,
+  distToSquareDiagonal,
+  inOasis,
   pointInPolygon,
   polygonArea,
-  southOfGate,
 } from "./loteMatriz";
 
 export type Aldea = 1 | 2 | 3 | 4;
@@ -35,195 +36,39 @@ export interface ResidentialLot {
   centroid: Vec;
   nearOasis: boolean;
   nearEntrance: boolean;
+  properties: {
+    id: string;
+    aldea: string;
+    sector_color: string;
+    tipo: "Lote Regular" | "Lote Premium (Oasis)" | "Lote Zen" | "Lote Ajuste";
+    area_m2: number;
+    precio_usd: number;
+    status: LotStatus;
+    cocheras_asignadas: number;
+  };
 }
 
 export const ALDEA_META: Record<
   Aldea,
   { name: string; fill: string; fillPremium: string; stroke: string; cardinal: string }
 > = {
-  1: { name: "Aldea 1", cardinal: "Oeste", fill: "#5C7A54", fillPremium: "#3F5A3A", stroke: "#32462E" },
-  2: { name: "Aldea 2", cardinal: "Norte", fill: "#D4B46A", fillPremium: "#C1963E", stroke: "#8E7030" },
-  3: { name: "Aldea 3", cardinal: "Este", fill: "#C46A4A", fillPremium: "#A84F36", stroke: "#7C3A28" },
-  4: { name: "Aldea 4", cardinal: "Sur", fill: "#CDB892", fillPremium: "#B89A6A", stroke: "#8A734C" },
+  1: { name: "Aldea 1", cardinal: "Oeste", fill: "#4E7D5B", fillPremium: "#3A5E44", stroke: "#2F4C35" },
+  2: { name: "Aldea 2", cardinal: "Norte", fill: "#C89D34", fillPremium: "#A67E20", stroke: "#7A5C16" },
+  3: { name: "Aldea 3", cardinal: "Este", fill: "#D35400", fillPremium: "#A84300", stroke: "#7A3000" },
+  4: { name: "Aldea 4", cardinal: "Sur", fill: "#8D7B68", fillPremium: "#6E5F50", stroke: "#52463C" },
 };
 
-const A = VERTICES.A;
-const B = VERTICES.B;
-const C = VERTICES.C;
-const D = VERTICES.D;
-const ORIGIN: Vec = { x: GATE.x, y: 0 };
+const TIPO: Record<Typology, ResidentialLot["properties"]["tipo"]> = {
+  standard: "Lote Regular",
+  "premium-oasis": "Lote Premium (Oasis)",
+  zen: "Lote Zen",
+  ajuste: "Lote Ajuste",
+};
 
-function side(p: Vec, a: Vec, b: Vec) {
-  return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-}
-export function aldeaOfPoint(p: Vec): Aldea {
-  const towardEast = side(p, A, C) < 0;
-  const towardNorth = side(p, B, D) > 0;
-  if (!towardEast && towardNorth) return 1;
-  if (towardEast && towardNorth) return 2;
-  if (towardEast && !towardNorth) return 3;
-  return 4;
-}
 function hash(n: number) {
   const x = Math.sin(n * 127.1) * 43758.5453;
   return x - Math.floor(x);
 }
-
-type Raw = {
-  poly: Vec[];
-  c: Vec;
-  aldea: Aldea;
-  si: number;
-  tj: number;
-  u0: number;
-  v0: number;
-  front: number;
-  depth: number;
-  areaM2: 120 | 240;
-};
-
-function at(u: number, v: number): Vec {
-  return { x: ORIGIN.x + u, y: v };
-}
-
-function cellValid(poly: Vec[]) {
-  const c = centroid(poly);
-  if (!pointInPolygon(c, INSET_RING)) return false;
-  if (poly.filter((p) => pointInPolygon(p, INSET_RING)).length < 4) return false;
-  if (inOasis(c, 4)) return false;
-  if (poly.some((p) => inOasis(p, 1))) return false;
-  if (southOfGate(c)) return false;
-  const area = polygonArea(poly);
-  if (area < 114 || area > 132) return false;
-  return true;
-}
-
-function buildGrid(): Raw[] {
-  const FRONT = LOT_FRONT;
-  const DEPTH = LOT_DEPTH;
-  const GAP = LOT_GAP;
-  const uMax = 210;
-  const vMax = 250;
-  const raw: Raw[] = [];
-  const quads: { uDir: 1 | -1; vDir: 1 | -1 }[] = [
-    { uDir: -1, vDir: 1 },
-    { uDir: 1, vDir: 1 },
-    { uDir: 1, vDir: -1 },
-    { uDir: -1, vDir: -1 },
-  ];
-  for (const q of quads) {
-    let uOff = STREET / 2 + 0.4;
-    let si = 0;
-    while (uOff + FRONT < uMax) {
-      let vOff = STREET / 2 + 0.4;
-      let tj = 0;
-      while (vOff + DEPTH < vMax) {
-        const u0 = q.uDir > 0 ? uOff : -(uOff + FRONT);
-        const v0 = q.vDir > 0 ? vOff : -(vOff + DEPTH);
-        const poly = [at(u0, v0), at(u0 + FRONT, v0), at(u0 + FRONT, v0 + DEPTH), at(u0, v0 + DEPTH)];
-        if (cellValid(poly)) {
-          const c = centroid(poly);
-          raw.push({
-            poly,
-            c,
-            aldea: aldeaOfPoint(c),
-            si,
-            tj,
-            u0,
-            v0,
-            front: FRONT,
-            depth: DEPTH,
-            areaM2: 120,
-          });
-        }
-        vOff += DEPTH;
-        tj++;
-        vOff += tj % 2 === 0 ? STREET : GAP;
-      }
-      uOff += FRONT;
-      si++;
-      uOff += si % 4 === 0 ? STREET : GAP;
-    }
-  }
-  return raw;
-}
-
-function pairPremium(cells: Raw[]): Raw[] {
-  const used = new Set<Raw>();
-  const out: Raw[] = [];
-  for (const aldea of [1, 2, 3, 4] as Aldea[]) {
-    const group = cells.filter((c) => c.aldea === aldea).sort((a, b) => dist(a.c, ORIGIN) - dist(b.c, ORIGIN));
-    let made = 0;
-    for (const a of group) {
-      if (used.has(a) || made >= 12) continue;
-      if (dist(a.c, ORIGIN) > 160) continue;
-      const buddy = group.find(
-        (b) => !used.has(b) && b !== a && b.tj === a.tj && Math.abs(b.u0 - a.u0) < a.front + LOT_GAP + 0.4,
-      );
-      if (!buddy) continue;
-      const u0 = Math.min(a.u0, buddy.u0);
-      const poly = [at(u0, a.v0), at(u0 + 16, a.v0), at(u0 + 16, a.v0 + a.depth), at(u0, a.v0 + a.depth)];
-      if (poly.some((p) => inOasis(p, 0)) || southOfGate(centroid(poly))) continue;
-      used.add(a);
-      used.add(buddy);
-      out.push({
-        poly,
-        c: centroid(poly),
-        aldea,
-        si: Math.min(a.si, buddy.si),
-        tj: a.tj,
-        u0,
-        v0: a.v0,
-        front: 16,
-        depth: a.depth,
-        areaM2: 240,
-      });
-      made++;
-    }
-  }
-  for (const c of cells) if (!used.has(c)) out.push(c);
-  return out;
-}
-
-function capPerAldea(cells: Raw[], cap = 96): Raw[] {
-  const out: Raw[] = [];
-  for (const aldea of [1, 2, 3, 4] as Aldea[]) {
-    const g = cells
-      .filter((c) => c.aldea === aldea)
-      .sort((a, b) => {
-        const score = (r: Raw) => (r.areaM2 === 240 ? 5 : 0) - dist(r.c, ORIGIN) / 400;
-        return score(b) - score(a);
-      });
-    out.push(...g.slice(0, cap));
-  }
-  return out;
-}
-
-function assignTypology(list: Raw[]): Map<Raw, Typology> {
-  const map = new Map<Raw, Typology>();
-  for (const item of list) {
-    if (item.areaM2 === 240) map.set(item, "premium-oasis");
-  }
-  const rest = list.filter((i) => !map.has(i)).sort((a, b) => dist(a.c, ORIGIN) - dist(b.c, ORIGIN));
-  let zen = 0;
-  let adj = 0;
-  const edge = [...rest].sort((a, b) => dist(b.c, ORIGIN) - dist(a.c, ORIGIN));
-  for (const item of rest) {
-    if (zen < 6 && dist(item.c, ORIGIN) < 160) {
-      map.set(item, "zen");
-      zen++;
-    }
-  }
-  for (const item of edge) {
-    if (map.has(item)) continue;
-    if (adj >= 6) break;
-    map.set(item, "ajuste");
-    adj++;
-  }
-  for (const item of list) if (!map.has(item)) map.set(item, "standard");
-  return map;
-}
-
 function statusFor(seed: number): LotStatus {
   const r = hash(seed + 9);
   if (r < 0.08) return "vendido";
@@ -237,55 +82,192 @@ function priceUSD(area: 120 | 240, typology: Typology) {
   return Math.round(base * m);
 }
 
-export function generateResidentialLots(): ResidentialLot[] {
-  const grid = capPerAldea(pairPremium(buildGrid()), 96);
-  const lots: ResidentialLot[] = [];
-  for (const aldea of [1, 2, 3, 4] as Aldea[]) {
-    const group = grid.filter((g) => g.aldea === aldea);
-    const types = assignTypology(group);
-    [...group]
-      .sort((a, b) => a.tj - b.tj || a.si - b.si)
-      .forEach((raw, i) => {
-        const typology = types.get(raw) ?? "standard";
-        const areaM2 = raw.areaM2;
-        lots.push({
-          id: `A${aldea}-${String(i + 1).padStart(2, "0")}`,
-          manzana: `A${aldea}-M${Math.floor(i / 8) + 1}`,
-          numero: i + 1,
-          aldea,
-          typology,
-          status: statusFor(aldea * 1000 + i),
-          areaM2,
-          widthM: areaM2 === 240 ? 16 : 8,
-          depthM: 15,
-          compatibleDomes: areaM2 === 240 ? [6, 7, 8] : [6, 7],
-          priceUSD: priceUSD(areaM2, typology),
-          polygon: raw.poly,
-          centroid: raw.c,
-          nearOasis: dist(raw.c, ORIGIN) < 130,
-          nearEntrance: raw.c.y < SOUTH_NEAR,
-        });
-      });
+function valid(poly: Vec[]) {
+  const c = centroid(poly);
+  if (!pointInPolygon(c, INSET_RING)) return false;
+  if (poly.some((p) => !pointInPolygon(p, INSET_RING))) return false;
+  if (inOasis(c, 3) || poly.some((p) => inOasis(p, 1))) return false;
+  if (c.y < SERVICE_Y + 1) return false;
+  if (distToSquareDiagonal(c) < 3.2) return false;
+  const area = polygonArea(poly);
+  return area >= 114 && area <= 252;
+}
+
+type Raw = { poly: Vec[]; c: Vec; aldea: Aldea; areaM2: 120 | 240 };
+
+function rect(x0: number, y0: number, dx: number, dy: number): Vec[] {
+  return [
+    { x: x0, y: y0 },
+    { x: x0 + dx, y: y0 },
+    { x: x0 + dx, y: y0 + dy },
+    { x: x0, y: y0 + dy },
+  ];
+}
+
+/** Aldea 1 Oeste y 3 Este: franjas verticales (fondo en X, frente 8 m en Y). */
+function verticalAldea(aldea: 1 | 3): Raw[] {
+  const inward = aldea === 1 ? 1 : -1;
+  const startX = aldea === 1 ? -HALF + PERIMETER_SETBACK : HALF - PERIMETER_SETBACK;
+  const out: Raw[] = [];
+  let col = 0;
+  let xCursor = startX;
+  while (col < 12) {
+    const x0 = inward > 0 ? xCursor : xCursor - LOT_DEPTH;
+    let row = 0;
+    let y = SERVICE_Y + STREET;
+    while (y + LOT_FRONT < HALF - PERIMETER_SETBACK) {
+      if (row > 0 && row % 4 === 0) y += STREET;
+      const poly = rect(x0, y, LOT_DEPTH, LOT_FRONT);
+      if (valid(poly)) out.push({ poly, c: centroid(poly), aldea, areaM2: 120 });
+      y += LOT_FRONT + LOT_GAP;
+      row++;
+    }
+    xCursor += inward * (LOT_DEPTH + (col % 2 === 1 ? STREET : LOT_GAP));
+    col++;
   }
+  return out;
+}
+
+/** Aldea 2 Norte y 4 Sur: franjas horizontales (fondo en Y, frente 8 m en X). */
+function horizontalAldea(aldea: 2 | 4): Raw[] {
+  const inward = aldea === 4 ? 1 : -1;
+  const startY = aldea === 4 ? SERVICE_Y + STREET : HALF - PERIMETER_SETBACK;
+  const out: Raw[] = [];
+  let band = 0;
+  let yCursor = startY;
+  while (band < 12) {
+    const y0 = inward > 0 ? yCursor : yCursor - LOT_DEPTH;
+    let col = 0;
+    let x = -HALF + PERIMETER_SETBACK + STREET;
+    while (x + LOT_FRONT < HALF - PERIMETER_SETBACK) {
+      if (col > 0 && col % 4 === 0) x += STREET;
+      const poly = rect(x, y0, LOT_FRONT, LOT_DEPTH);
+      if (valid(poly)) out.push({ poly, c: centroid(poly), aldea, areaM2: 120 });
+      x += LOT_FRONT + LOT_GAP;
+      col++;
+    }
+    yCursor += inward * (LOT_DEPTH + (band % 2 === 1 ? STREET : LOT_GAP));
+    band++;
+  }
+  return out;
+}
+
+function pairNearOasis(list: Raw[], aldea: Aldea): Raw[] {
+  const group = list.filter((r) => r.aldea === aldea);
+  const used = new Set<Raw>();
+  const out: Raw[] = [];
+  const ranked = [...group].sort((a, b) => Math.hypot(a.c.x, a.c.y - 12) - Math.hypot(b.c.x, b.c.y - 12));
+  let made = 0;
+  for (const a of ranked) {
+    if (used.has(a) || made >= 12) continue;
+    const buddy = group.find((b) => {
+      if (used.has(b) || b === a) return false;
+      const dx = Math.abs(a.c.x - b.c.x);
+      const dy = Math.abs(a.c.y - b.c.y);
+      if (aldea === 1 || aldea === 3) return dy < 9 && dx < 4;
+      return dx < 9 && dy < 4;
+    });
+    if (!buddy) continue;
+    const xs = [...a.poly, ...buddy.poly].map((p) => p.x);
+    const ys = [...a.poly, ...buddy.poly].map((p) => p.y);
+    const poly = rect(Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    if (!valid(poly) && polygonArea(poly) < 220) continue;
+    used.add(a);
+    used.add(buddy);
+    out.push({ poly, c: centroid(poly), aldea, areaM2: 240 });
+    made++;
+  }
+  for (const r of group) if (!used.has(r)) out.push(r);
+  return out;
+}
+
+function cap(list: Raw[], n = 96) {
+  return [...list]
+    .sort((a, b) => (a.areaM2 === 240 ? -1 : 1) || Math.hypot(a.c.x, a.c.y) - Math.hypot(b.c.x, b.c.y))
+    .slice(0, n);
+}
+
+function typologyOf(raw: Raw, index: number, total: number): Typology {
+  if (raw.areaM2 === 240) return "premium-oasis";
+  if (index >= total - 6) return "ajuste";
+  if (index < 6) return "zen";
+  return "standard";
+}
+
+export function generateResidentialLots(): ResidentialLot[] {
+  const pools: Raw[][] = [
+    cap(pairNearOasis(verticalAldea(1), 1)),
+    cap(pairNearOasis(horizontalAldea(2), 2)),
+    cap(pairNearOasis(verticalAldea(3), 3)),
+    cap(pairNearOasis(horizontalAldea(4), 4)),
+  ];
+  const lots: ResidentialLot[] = [];
+  pools.forEach((group, gi) => {
+    const aldea = (gi + 1) as Aldea;
+    group.forEach((raw, i) => {
+      const typology = typologyOf(raw, i, group.length);
+      const areaM2 = raw.areaM2;
+      const id = `A${aldea}-${String(i + 1).padStart(2, "0")}`;
+      const price = priceUSD(areaM2, typology);
+      const status = statusFor(aldea * 1000 + i);
+      lots.push({
+        id,
+        manzana: `A${aldea}-M${Math.floor(i / 8) + 1}`,
+        numero: i + 1,
+        aldea,
+        typology,
+        status,
+        areaM2,
+        widthM: areaM2 === 240 ? 16 : 8,
+        depthM: 15,
+        compatibleDomes: areaM2 === 240 ? [6, 7, 8] : [6, 7],
+        priceUSD: price,
+        polygon: raw.poly,
+        centroid: raw.c,
+        nearOasis: Math.hypot(raw.c.x, raw.c.y - 12) < 110,
+        nearEntrance: raw.c.y < SERVICE_Y + 40,
+        properties: {
+          id,
+          aldea: ALDEA_META[aldea].name,
+          sector_color: ALDEA_META[aldea].fill,
+          tipo: TIPO[typology],
+          area_m2: areaM2,
+          precio_usd: price,
+          status,
+          cocheras_asignadas: 0,
+        },
+      });
+    });
+  });
   return lots;
 }
 
-const SOUTH_NEAR = -140;
-
 export const RESIDENTIAL_LOTS = generateResidentialLots();
+
+export function toGeoJSON(lots = RESIDENTIAL_LOTS) {
+  return {
+    type: "FeatureCollection" as const,
+    features: lots.map((lot) => ({
+      type: "Feature" as const,
+      properties: lot.properties,
+      geometry: {
+        type: "Polygon" as const,
+        coordinates: [[...lot.polygon.map((p) => [p.x, p.y]), [lot.polygon[0].x, lot.polygon[0].y]]],
+      },
+    })),
+  };
+}
 
 export function inventoryCounts(lots = RESIDENTIAL_LOTS) {
   const byAldea = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<Aldea, number>;
   const byType = { standard: 0, "premium-oasis": 0, zen: 0, ajuste: 0 } as Record<Typology, number>;
-  let soldM2 = 0;
   let n120 = 0;
   let n240 = 0;
   for (const l of lots) {
     byAldea[l.aldea]++;
     byType[l.typology]++;
-    soldM2 += l.areaM2;
     if (l.areaM2 === 120) n120++;
     else n240++;
   }
-  return { total: lots.length, byAldea, byType, soldM2, n120, n240, parking: 192 };
+  return { total: lots.length, byAldea, byType, n120, n240, parking: 192, gate: GATE };
 }
