@@ -1,5 +1,5 @@
 import type { Vec } from "./loteMatriz";
-import { VERTICES } from "./loteMatriz";
+import { fromA } from "./loteMatriz";
 
 export type AmenityCategory =
   | "oasis"
@@ -34,39 +34,39 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Piscina",
     category: "oasis",
     categoryLabel: "Agua",
-    anchor: ring(248, 58),
-    blurb: "Piscina climatizada con deck de teca sobre el borde sur de la laguna.",
-    details: ["Deck solárium", "Agua climatizada", "Servicio de toallas"],
+    anchor: ring(248, 42),
+    blurb: "Piscina en el borde sur de la laguna, dentro del oasis de 20.662 m\u00b2.",
+    details: ["Deck sol\u00e1rium", "Agua climatizada"],
   },
   {
     id: "bar-lounge",
     name: "Bar & Lounge",
     shortLabel: "Bar & Lounge",
     category: "gastronomia",
-    categoryLabel: "Gastronomía",
-    anchor: ring(55, 60),
-    blurb: "Coctelería de autor y cocina marina con terraza al oasis.",
-    details: ["Terraza elevada", "Cocina Paracas", "Atardeceres"],
+    categoryLabel: "Gastronom\u00eda",
+    anchor: ring(90, 38),
+    blurb: "Terraza al norte de la laguna.",
+    details: ["Terraza elevada", "Cocina Paracas"],
   },
   {
     id: "yoga-deck",
     name: "Yoga Deck",
-    shortLabel: "Yoga Deck",
+    shortLabel: "Yoga",
     category: "wellness",
     categoryLabel: "Wellness",
-    anchor: ring(175, 60),
-    blurb: "Plataforma de madera para práctica al amanecer, al oeste de la laguna.",
-    details: ["Madera natural", "Clases al alba", "Meditación"],
+    anchor: ring(180, 40),
+    blurb: "Plataforma al oeste de la laguna.",
+    details: ["Madera natural", "Clases al alba"],
   },
   {
     id: "zona-chill",
     name: "Zona Chill & Hamacas",
-    shortLabel: "Chill",
+    shortLabel: "Hamacas",
     category: "wellness",
     categoryLabel: "Wellness",
-    anchor: ring(130, 62),
-    blurb: "Hamacas bajo palmeras datileras, fuera del espejo de agua.",
-    details: ["Hamacas de algodón", "Sombra de palmeras"],
+    anchor: ring(140, 44),
+    blurb: "Hamacas bajo palmeras, dentro del anillo del oasis.",
+    details: ["Hamacas", "Sombra"],
   },
   {
     id: "fogatas",
@@ -74,9 +74,9 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Fogatas",
     category: "recreacion",
     categoryLabel: "Noche",
-    anchor: ring(15, 60),
-    blurb: "Firepits de caliche para astroturismo al este del oasis.",
-    details: ["3 firepits de piedra", "Cielo de Paracas"],
+    anchor: ring(20, 42),
+    blurb: "Firepits para astroturismo al este del lago.",
+    details: ["3 firepits", "Cielo de Paracas"],
   },
   {
     id: "juegos",
@@ -84,18 +84,18 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Juegos",
     category: "recreacion",
     categoryLabel: "Familia",
-    anchor: ring(300, 60),
-    blurb: "Juegos de madera y cuerda sobre arena tamizada.",
-    details: ["Madera certificada", "Sombra continua"],
+    anchor: ring(310, 42),
+    blurb: "Juegos de madera sobre arena, dentro del oasis.",
+    details: ["Madera", "Sombra continua"],
   },
   {
     id: "portico",
-    name: "Pórtico de Ingreso 24/7",
-    shortLabel: "Pórtico",
+    name: "P\u00f3rtico de Ingreso 24/7",
+    shortLabel: "P\u00f3rtico",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: { x: VERTICES.A.x, y: VERTICES.A.y + 22 },
-    blurb: "Control de acceso monumental sobre el vértice sur.",
+    anchor: fromA(18, 0),
+    blurb: "Control monumental en el eje AC. No ocupa lotes.",
     details: ["Doble carril", "Seguridad 24/7"],
   },
   {
@@ -104,9 +104,9 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Welcome",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: { x: VERTICES.A.x - 36, y: VERTICES.A.y + 28 },
-    blurb: "Recepción y concierge para propietarios e invitados.",
-    details: ["Concierge", "Carritos eléctricos"],
+    anchor: fromA(22, -28),
+    blurb: "Recepci\u00f3n a la izquierda del p\u00f3rtico.",
+    details: ["Concierge", "Carritos"],
   },
   {
     id: "lobby",
@@ -114,27 +114,27 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Lobby",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: { x: VERTICES.A.x + 36, y: VERTICES.A.y + 28 },
-    blurb: "Showroom de tipologías de domo y terraza de bienvenida.",
-    details: ["Showroom", "Atención comercial"],
+    anchor: fromA(22, 28),
+    blurb: "Showroom a la derecha del p\u00f3rtico.",
+    details: ["Showroom", "Atenci\u00f3n comercial"],
   },
   {
     id: "cocheras",
-    name: "Cochera Plus · 192 plazas",
-    shortLabel: "Cocheras Plus",
+    name: "Cochera Plus \u00b7 192 plazas",
+    shortLabel: "Cochera Plus",
     category: "estacionamiento",
     categoryLabel: "Servicios",
-    anchor: { x: VERTICES.A.x + 2, y: VERTICES.A.y + 42 },
-    blurb: "Bahías techadas a ambos lados del pórtico de llegada.",
-    details: ["192 plazas", "Carga eléctrica"],
+    anchor: fromA(36, 0),
+    blurb: "Cuatro bah\u00edas a lo largo de la franja Sur, no en el pico del diamante.",
+    details: ["192 plazas", "4 bah\u00edas", "Carga el\u00e9ctrica"],
   },
 ];
 
-export function organicLagoonPath(rx = 46, ry = 40, waves = 7) {
+export function organicLagoonPath(rx = 38, ry = 28, waves = 6) {
   const pts: Vec[] = [];
   for (let i = 0; i <= 48; i++) {
     const t = (i / 48) * Math.PI * 2;
-    const k = 1 + 0.08 * Math.sin(t * waves) + 0.04 * Math.cos(t * 3);
+    const k = 1 + 0.07 * Math.sin(t * waves) + 0.04 * Math.cos(t * 3);
     pts.push({ x: q(Math.cos(t) * rx * k), y: q(Math.sin(t) * ry * k) });
   }
   return pts;
@@ -142,10 +142,10 @@ export function organicLagoonPath(rx = 46, ry = 40, waves = 7) {
 
 export function palmPositions(): Vec[] {
   const palms: Vec[] = [];
-  for (let i = 0; i < 22; i++) {
-    const t = (i / 22) * Math.PI * 2 + 0.2;
-    const k = 1 + (i % 3) * 0.03;
-    palms.push({ x: q(Math.cos(t) * 50 * k), y: q(Math.sin(t) * 44 * k) });
+  for (let i = 0; i < 28; i++) {
+    const t = (i / 28) * Math.PI * 2 + 0.15;
+    const k = 1 + (i % 3) * 0.04;
+    palms.push({ x: q(Math.cos(t) * 62 * k), y: q(Math.sin(t) * 50 * k) });
   }
   return palms;
 }
