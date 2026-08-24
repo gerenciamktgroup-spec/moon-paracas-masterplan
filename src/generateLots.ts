@@ -1,9 +1,9 @@
 import {
   type Vec,
   VERTICES,
+  GATE,
   centroid,
   dist,
-  DIAGONAL_CROSS,
   inOasis,
   INSET_RING,
   LOT_DEPTH,
@@ -51,7 +51,7 @@ const A = VERTICES.A;
 const B = VERTICES.B;
 const C = VERTICES.C;
 const D = VERTICES.D;
-const ORIGIN = DIAGONAL_CROSS;
+const ORIGIN: Vec = { x: GATE.x, y: 0 };
 
 function side(p: Vec, a: Vec, b: Vec) {
   return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
@@ -68,16 +68,6 @@ function hash(n: number) {
   const x = Math.sin(n * 127.1) * 43758.5453;
   return x - Math.floor(x);
 }
-function add(a: Vec, b: Vec): Vec {
-  return { x: a.x + b.x, y: a.y + b.y };
-}
-function scale(a: Vec, s: number): Vec {
-  return { x: a.x * s, y: a.y * s };
-}
-function distToSegment(p: Vec, a: Vec, b: Vec) {
-  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  return Math.abs((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x)) / len;
-}
 
 type Raw = {
   poly: Vec[];
@@ -92,15 +82,8 @@ type Raw = {
   areaM2: 120 | 240;
 };
 
-const U_VEC = { x: D.x - B.x, y: D.y - B.y };
-const U_LEN = Math.hypot(U_VEC.x, U_VEC.y);
-const U_HAT = { x: U_VEC.x / U_LEN, y: U_VEC.y / U_LEN };
-const V_RAW = { x: -U_HAT.y, y: U_HAT.x };
-const V_SIGN = V_RAW.x * (C.x - A.x) + V_RAW.y * (C.y - A.y) >= 0 ? 1 : -1;
-const V_HAT = { x: V_RAW.x * V_SIGN, y: V_RAW.y * V_SIGN };
-
 function at(u: number, v: number): Vec {
-  return add(add(ORIGIN, scale(U_HAT, u)), scale(V_HAT, v));
+  return { x: ORIGIN.x + u, y: v };
 }
 
 function cellValid(poly: Vec[]) {
@@ -110,8 +93,6 @@ function cellValid(poly: Vec[]) {
   if (inOasis(c, 4)) return false;
   if (poly.some((p) => inOasis(p, 1))) return false;
   if (southOfGate(c)) return false;
-  if (distToSegment(c, A, C) < 3.4) return false;
-  if (distToSegment(c, B, D) < 3.4) return false;
   const area = polygonArea(poly);
   if (area < 114 || area > 132) return false;
   return true;
@@ -121,8 +102,8 @@ function buildGrid(): Raw[] {
   const FRONT = LOT_FRONT;
   const DEPTH = LOT_DEPTH;
   const GAP = LOT_GAP;
-  const uMax = U_LEN / 2 - 2;
-  const vMax = U_LEN / 2 + 20;
+  const uMax = 210;
+  const vMax = 250;
   const raw: Raw[] = [];
   const quads: { uDir: 1 | -1; vDir: 1 | -1 }[] = [
     { uDir: -1, vDir: 1 },
@@ -175,7 +156,7 @@ function pairPremium(cells: Raw[]): Raw[] {
     let made = 0;
     for (const a of group) {
       if (used.has(a) || made >= 12) continue;
-      if (dist(a.c, ORIGIN) > 150) continue;
+      if (dist(a.c, ORIGIN) > 160) continue;
       const buddy = group.find(
         (b) => !used.has(b) && b !== a && b.tj === a.tj && Math.abs(b.u0 - a.u0) < a.front + LOT_GAP + 0.4,
       );
@@ -282,12 +263,14 @@ export function generateResidentialLots(): ResidentialLot[] {
           polygon: raw.poly,
           centroid: raw.c,
           nearOasis: dist(raw.c, ORIGIN) < 130,
-          nearEntrance: southOfGate({ x: raw.c.x, y: raw.c.y + 40 }),
+          nearEntrance: raw.c.y < SOUTH_NEAR,
         });
       });
   }
   return lots;
 }
+
+const SOUTH_NEAR = -140;
 
 export const RESIDENTIAL_LOTS = generateResidentialLots();
 
