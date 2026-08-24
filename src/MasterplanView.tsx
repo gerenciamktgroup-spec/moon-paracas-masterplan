@@ -9,13 +9,16 @@ import {
   type ResidentialLot,
 } from "./generateLots";
 import {
+  FRONT_CHORD,
+  GATE,
   LOTE_MATRIZ,
   OASIS,
   RING,
+  SOUTH_GATE_Y,
   SVG_VIEW,
   VERTICES,
   INSET_RING,
-  fromA,
+  fromFront,
   oasisArea,
   polyToSvg,
 } from "./loteMatriz";
@@ -32,8 +35,8 @@ function sy(y: number) {
   return -y;
 }
 
-function bay(s: number, t0: number, t1: number) {
-  const p = [fromA(s, t0), fromA(s + 16, t0), fromA(s + 16, t1), fromA(s, t1)];
+function bay(north: number, e0: number, e1: number) {
+  const p = [fromFront(north, e0), fromFront(north + 16, e0), fromFront(north + 16, e1), fromFront(north, e1)];
   return polyToSvg(p);
 }
 
@@ -66,18 +69,18 @@ export function MasterplanView() {
     { from: VERTICES.D, to: VERTICES.A, label: `${LOTE_MATRIZ.sides.DA.toFixed(2)} m` },
   ];
 
-  const welcome = fromA(22, -28);
-  const portico = fromA(16, 0);
-  const lobby = fromA(22, 28);
-  const dropL = fromA(10, -12);
-  const dropR = fromA(10, 12);
+  const welcome = fromFront(12, -28);
+  const portico = fromFront(8, 0);
+  const lobby = fromFront(12, 28);
+  const dropL = fromFront(4, -12);
+  const dropR = fromFront(4, 12);
 
   return (
     <div className="relative h-dvh overflow-hidden bg-sand text-ink">
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-start justify-between gap-3 p-3 sm:p-4">
         <div className="pointer-events-auto max-w-md rounded-2xl border border-line bg-paper/95 px-4 py-3 shadow-sm backdrop-blur">
           <p className="font-display text-xl font-semibold leading-none tracking-tight sm:text-2xl">Moon Paracas</p>
-          <p className="mt-1 text-xs text-muted">Masterplan director · UTM 18S · 4 aldeas · oasis 20.662 m²</p>
+          <p className="mt-1 text-xs text-muted">Lotes ortogonales · puerta al centro del frontis Sur</p>
         </div>
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-2 text-[11px] font-medium">
@@ -134,26 +137,9 @@ export function MasterplanView() {
             <stop offset="55%" stopColor="#3d8b84" />
             <stop offset="100%" stopColor="#2b6d68" />
           </linearGradient>
-          <filter id="soft">
-            <feDropShadow dx="0" dy="1.2" stdDeviation="1.4" floodColor="#161310" floodOpacity="0.18" />
-          </filter>
         </defs>
 
         <rect x={SVG_VIEW.minX} y={SVG_VIEW.minY} width={SVG_VIEW.width} height={SVG_VIEW.height} fill="#efe6d6" />
-
-        {grid
-          ? Array.from({ length: 26 }, (_, i) => {
-              const y = -300 + i * 50;
-              const x = -260 + i * 50;
-              return (
-                <g key={i} stroke="#d7cbb8" strokeWidth="0.4">
-                  <line x1={-260} y1={sy(y)} x2={280} y2={sy(y)} />
-                  <line x1={x} y1={sy(-300)} x2={x} y2={sy(320)} />
-                </g>
-              );
-            })
-          : null}
-
         <path d={polyToSvg(RING)} fill="#e6d9c4" stroke="#a84f36" strokeWidth="2.4" />
         <path d={polyToSvg(INSET_RING)} fill="#efe4d1" stroke="#c5a059" strokeWidth="1.1" fillOpacity="0.45" />
 
@@ -169,42 +155,24 @@ export function MasterplanView() {
                   ? meta.fillPremium
                   : meta.fill;
           return (
-            <g key={l.id}>
-              <path
-                d={polyToSvg(l.polygon)}
-                fill={fill}
-                fillOpacity={l.status === "reservado" ? 0.72 : selected ? 1 : 0.92}
-                stroke={selected ? "#161310" : meta.stroke}
-                strokeWidth={selected ? 1.1 : 0.28}
-                className="cursor-pointer"
-                onClick={() => {
-                  setLot(l);
-                  setAmenity(null);
-                }}
-              />
-              <ellipse
-                cx={l.centroid.x}
-                cy={sy(l.centroid.y)}
-                rx={l.areaM2 === 240 ? 1.55 : 1.15}
-                ry={l.areaM2 === 240 ? 1.35 : 1.05}
-                fill="#f7f1e8"
-                opacity="0.9"
-                className="pointer-events-none"
-              />
-            </g>
+            <path
+              key={l.id}
+              d={polyToSvg(l.polygon)}
+              fill={fill}
+              fillOpacity={l.status === "reservado" ? 0.72 : selected ? 1 : 0.92}
+              stroke={selected ? "#161310" : meta.stroke}
+              strokeWidth={selected ? 1.1 : 0.28}
+              className="cursor-pointer"
+              onClick={() => {
+                setLot(l);
+                setAmenity(null);
+              }}
+            />
           );
         })}
 
         <ellipse cx={OASIS.x} cy={sy(OASIS.y)} rx={OASIS.rx} ry={OASIS.ry} fill="#cbb892" opacity="0.92" />
-        <path d={polyToSvg(lagoon)} fill="url(#lagoon)" stroke="#9ee0db" strokeWidth="1.2" filter="url(#soft)" />
-        <ellipse cx="8" cy={sy(10)} rx="16" ry="8" fill="#ffffff" opacity="0.16" />
-
-        {palms.map((p, i) => (
-          <g key={i} transform={`translate(${p.x} ${sy(p.y)})`}>
-            <circle r="1.05" fill="#3a5a34" />
-            <circle r="0.4" cy="-1.3" fill="#5c7a54" />
-          </g>
-        ))}
+        <path d={polyToSvg(lagoon)} fill="url(#lagoon)" stroke="#9ee0db" strokeWidth="1.2" />
 
         {AMENITIES.filter((a) => a.category !== "acceso" && a.category !== "estacionamiento").map((a) => (
           <g
@@ -224,6 +192,14 @@ export function MasterplanView() {
         ))}
 
         <g>
+          <line
+            x1={FRONT_CHORD.west.x}
+            y1={sy(SOUTH_GATE_Y)}
+            x2={FRONT_CHORD.east.x}
+            y2={sy(SOUTH_GATE_Y)}
+            stroke="#8d7030"
+            strokeWidth="1.4"
+          />
           <path d={bay(28, -58, -32)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
           <path d={bay(28, -30, -8)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
           <path d={bay(28, 8, 30)} fill="#d9c9a8" stroke="#8a734c" strokeWidth="0.6" />
@@ -233,6 +209,7 @@ export function MasterplanView() {
           <rect x={lobby.x - 10} y={sy(lobby.y) - 6} width="20" height="12" rx="1.4" fill="#c5a059" stroke="#8d7030" />
           <circle cx={dropL.x} cy={sy(dropL.y)} r="6" fill="none" stroke="#4e6646" strokeWidth="0.7" />
           <circle cx={dropR.x} cy={sy(dropR.y)} r="6" fill="none" stroke="#4e6646" strokeWidth="0.7" />
+          <circle cx={GATE.x} cy={sy(GATE.y)} r="2.2" fill="#c5a059" />
           {AMENITIES.filter((a) => a.category === "acceso" || a.category === "estacionamiento").map((a) => (
             <g
               key={a.id}
@@ -275,7 +252,7 @@ export function MasterplanView() {
 
       {hud ? (
         <aside className="absolute bottom-3 left-3 z-20 w-[min(100%-1.5rem,380px)] rounded-2xl border border-line bg-paper/95 p-4 shadow-lg backdrop-blur sm:bottom-4 sm:left-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Inventario · programa 3D</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Inventario · lotes derechos</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <Stat k="Lotes" v={`${counts.total}/384`} />
             <Stat k="Oasis" v={`${Math.round(oasisArea()).toLocaleString("es-PE")} m²`} />
@@ -292,11 +269,9 @@ export function MasterplanView() {
           </div>
           <p className="mt-3 text-[11px] text-muted">
             Premium {counts.byType["premium-oasis"]} · Zen {counts.byType.zen} · Ajuste {counts.byType.ajuste} · Std{" "}
-            {counts.byType.standard} · {counts.n120}×120 · {counts.n240}×240
+            {counts.byType.standard}
           </p>
-          <p className="mt-1 text-[10px] text-olive">
-            8×15 m · vías 6 m · pirca 10 m · ×8 solo en 240 · predio {LOTE_MATRIZ.areaM2.toLocaleString("es-PE")} m²
-          </p>
+          <p className="mt-1 text-[10px] text-olive">8×15 m alineados al norte · pórtico al centro del corte Sur y={SOUTH_GATE_Y}</p>
         </aside>
       ) : null}
 
@@ -318,15 +293,7 @@ export function MasterplanView() {
                 </>
               )}
             </div>
-            <button
-              type="button"
-              className="rounded-full border border-line p-1.5"
-              onClick={() => {
-                setLot(null);
-                setAmenity(null);
-              }}
-              aria-label="Cerrar"
-            >
+            <button type="button" className="rounded-full border border-line p-1.5" onClick={() => { setLot(null); setAmenity(null); }} aria-label="Cerrar">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -337,62 +304,30 @@ export function MasterplanView() {
               <Row k="Área" v={`${lot.areaM2} m²`} />
               <Row k="Frente / fondo" v={`${lot.widthM} × ${lot.depthM} m`} />
               <Row k="Domos" v={lot.compatibleDomes.map((d) => `Ø${d}`).join(" · ")} />
-              <Row k="Precio" v={`US$ ${lot.priceUSD.toLocaleString("en-US")}`} />
             </div>
           ) : (
             <div className="mt-3 space-y-2 text-sm text-muted">
               <p>{amenity?.blurb}</p>
-              <ul className="list-disc pl-4">
-                {amenity?.details.map((d) => (
-                  <li key={d}>{d}</li>
-                ))}
-              </ul>
             </div>
           )}
         </aside>
       )}
 
-      <button
-        type="button"
-        className="absolute bottom-3 right-3 z-10 rounded-full border border-line bg-paper p-2 shadow-sm sm:hidden"
-        onClick={() => {
-          setLot(null);
-          setAmenity(null);
-        }}
-        aria-label="Reset"
-      >
+      <button type="button" className="absolute bottom-3 right-3 z-10 rounded-full border border-line bg-paper p-2 shadow-sm sm:hidden" onClick={() => { setLot(null); setAmenity(null); }} aria-label="Reset">
         <RotateCcw className="h-4 w-4" />
       </button>
     </div>
   );
 }
 
-function FilterChip({
-  active,
-  onClick,
-  label,
-  dot,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  dot?: string;
-}) {
+function FilterChip({ active, onClick, label, dot }: { active: boolean; onClick: () => void; label: string; dot?: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium",
-        active ? "bg-ink text-sand" : "text-ink hover:bg-sand",
-      )}
-    >
+    <button type="button" onClick={onClick} className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium", active ? "bg-ink text-sand" : "text-ink hover:bg-sand")}>
       {dot ? <span className="h-2 w-2 rounded-full" style={{ background: dot }} /> : null}
       {label}
     </button>
   );
 }
-
 function Stat({ k, v }: { k: string; v: string }) {
   return (
     <div className="rounded-xl bg-sand-2 px-2 py-2">
@@ -401,7 +336,6 @@ function Stat({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
-
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-line/80 py-1.5 last:border-0">
