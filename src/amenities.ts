@@ -1,5 +1,5 @@
 import type { Vec } from "./loteMatriz";
-import { fromFront } from "./loteMatriz";
+import { OASIS, fromFront } from "./loteMatriz";
 
 export type AmenityCategory =
   | "oasis"
@@ -20,132 +20,30 @@ export interface MasterplanAmenity {
   details: string[];
 }
 
-const q = (n: number) => Math.round(n * 1000) / 1000;
-const deg = (d: number) => (d * Math.PI) / 180;
-const ring = (angle: number, r: number): Vec => ({
-  x: q(Math.cos(deg(angle)) * r),
-  y: q(8 + Math.sin(deg(angle)) * r),
-});
+const o = (dx: number, dy: number): Vec => ({ x: OASIS.x + dx, y: OASIS.y + dy });
 
 export const AMENITIES: MasterplanAmenity[] = [
-  {
-    id: "piscina-oasis",
-    name: "Piscina Oasis",
-    shortLabel: "Piscina",
-    category: "oasis",
-    categoryLabel: "Agua",
-    anchor: ring(248, 42),
-    blurb: "Piscina al sur de la laguna, dentro del oasis.",
-    details: ["Deck solárium", "Agua climatizada"],
-  },
-  {
-    id: "bar-lounge",
-    name: "Bar & Lounge",
-    shortLabel: "Bar & Lounge",
-    category: "gastronomia",
-    categoryLabel: "Gastronomía",
-    anchor: ring(90, 38),
-    blurb: "Terraza al norte de la laguna.",
-    details: ["Terraza elevada", "Cocina Paracas"],
-  },
-  {
-    id: "yoga-deck",
-    name: "Yoga Deck",
-    shortLabel: "Yoga",
-    category: "wellness",
-    categoryLabel: "Wellness",
-    anchor: ring(180, 40),
-    blurb: "Plataforma al oeste de la laguna.",
-    details: ["Madera natural", "Clases al alba"],
-  },
-  {
-    id: "zona-chill",
-    name: "Zona Chill & Hamacas",
-    shortLabel: "Hamacas",
-    category: "wellness",
-    categoryLabel: "Wellness",
-    anchor: ring(140, 44),
-    blurb: "Hamacas bajo palmeras.",
-    details: ["Hamacas", "Sombra"],
-  },
-  {
-    id: "fogatas",
-    name: "Fogatas Sociales",
-    shortLabel: "Fogatas",
-    category: "recreacion",
-    categoryLabel: "Noche",
-    anchor: ring(20, 42),
-    blurb: "Firepits al este del lago.",
-    details: ["3 firepits", "Cielo de Paracas"],
-  },
-  {
-    id: "juegos",
-    name: "Juegos Infantiles",
-    shortLabel: "Juegos",
-    category: "recreacion",
-    categoryLabel: "Familia",
-    anchor: ring(310, 42),
-    blurb: "Juegos de madera sobre arena.",
-    details: ["Madera", "Sombra continua"],
-  },
-  {
-    id: "portico",
-    name: "Pórtico de Ingreso 24/7",
-    shortLabel: "Pórtico",
-    category: "acceso",
-    categoryLabel: "Acceso",
-    anchor: fromFront(8, 0),
-    blurb: "Puerta al centro del frontis Sur, no en el pico A.",
-    details: ["Eje del corte horizontal", "Doble carril", "Seguridad 24/7"],
-  },
-  {
-    id: "welcome",
-    name: "Welcome Center",
-    shortLabel: "Welcome",
-    category: "acceso",
-    categoryLabel: "Acceso",
-    anchor: fromFront(12, -28),
-    blurb: "Recepción a la izquierda del pórtico.",
-    details: ["Concierge", "Carritos"],
-  },
-  {
-    id: "lobby",
-    name: "Lobby Vistas",
-    shortLabel: "Lobby",
-    category: "acceso",
-    categoryLabel: "Acceso",
-    anchor: fromFront(12, 28),
-    blurb: "Showroom a la derecha del pórtico.",
-    details: ["Showroom", "Atención comercial"],
-  },
-  {
-    id: "cocheras",
-    name: "Cochera Plus · 192 plazas",
-    shortLabel: "Cochera Plus",
-    category: "estacionamiento",
-    categoryLabel: "Servicios",
-    anchor: fromFront(28, 0),
-    blurb: "Cuatro bahías sobre el frontis, simétricas al pórtico.",
-    details: ["192 plazas", "4 bahías"],
-  },
+  { id: "bar-lounge", name: "Bar & Lounge", shortLabel: "Bar & Lounge", category: "gastronomia", categoryLabel: "Gastronomía", anchor: o(0, 48), blurb: "Terraza norte del oasis.", details: ["Terraza"] },
+  { id: "fogatas", name: "Fogatas Sociales", shortLabel: "Fogatas", category: "recreacion", categoryLabel: "Noche", anchor: o(48, 28), blurb: "Firepits noreste.", details: ["Astroturismo"] },
+  { id: "juegos", name: "Juegos Infantiles", shortLabel: "Juegos", category: "recreacion", categoryLabel: "Familia", anchor: o(48, -28), blurb: "Juegos sureste.", details: ["Madera"] },
+  { id: "hamacas", name: "Zona Chill / Hamacas", shortLabel: "Hamacas", category: "wellness", categoryLabel: "Wellness", anchor: o(-48, 28), blurb: "Hamacas noroeste.", details: ["Sombra"] },
+  { id: "yoga", name: "Yoga Deck", shortLabel: "Yoga Deck", category: "wellness", categoryLabel: "Wellness", anchor: o(-48, -28), blurb: "Deck suroeste.", details: ["Alba"] },
+  { id: "piscina", name: "Piscina Oasis", shortLabel: "Piscina Oasis", category: "oasis", categoryLabel: "Agua", anchor: o(0, -8), blurb: "Cuerpo de agua central.", details: ["20.662 m² de núcleo"] },
+  { id: "portico", name: "Pórtico de Ingreso", shortLabel: "Pórtico", category: "acceso", categoryLabel: "Acceso", anchor: fromFront(14, 0), blurb: "Centro del frontis horizontal.", details: ["Rotonda", "24/7"] },
+  { id: "welcome", name: "Welcome Center", shortLabel: "Welcome", category: "acceso", categoryLabel: "Acceso", anchor: fromFront(16, -36), blurb: "Izquierda del pórtico.", details: ["Concierge"] },
+  { id: "lobby", name: "Lobby Vistas", shortLabel: "Lobby", category: "acceso", categoryLabel: "Acceso", anchor: fromFront(16, 36), blurb: "Derecha del pórtico.", details: ["Showroom"] },
+  { id: "cocheras", name: "Cochera Plus", shortLabel: "192 Cocheras Plus", category: "estacionamiento", categoryLabel: "Servicios", anchor: fromFront(28, 0), blurb: "192 plazas lineales en el frontis Sur.", details: ["192", "Franja horizontal"] },
 ];
 
-export function organicLagoonPath(rx = 38, ry = 28, waves = 6) {
+export function organicLagoonPath() {
   const pts: Vec[] = [];
-  for (let i = 0; i <= 48; i++) {
-    const t = (i / 48) * Math.PI * 2;
-    const k = 1 + 0.07 * Math.sin(t * waves) + 0.04 * Math.cos(t * 3);
-    pts.push({ x: q(Math.cos(t) * rx * k), y: q(8 + Math.sin(t) * ry * k) });
+  for (let i = 0; i <= 40; i++) {
+    const t = (i / 40) * Math.PI * 2;
+    const k = 1 + 0.06 * Math.sin(t * 5);
+    pts.push({ x: OASIS.x + Math.cos(t) * 36 * k, y: OASIS.y + Math.sin(t) * 22 * k });
   }
   return pts;
 }
-
 export function palmPositions(): Vec[] {
-  const palms: Vec[] = [];
-  for (let i = 0; i < 28; i++) {
-    const t = (i / 28) * Math.PI * 2 + 0.15;
-    const k = 1 + (i % 3) * 0.04;
-    palms.push({ x: q(Math.cos(t) * 62 * k), y: q(8 + Math.sin(t) * 50 * k) });
-  }
-  return palms;
+  return [];
 }
