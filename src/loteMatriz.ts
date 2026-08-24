@@ -20,7 +20,6 @@ export const LOTE_MATRIZ = {
 
 export const UTM_ORIGIN = { east: 374770.351, north: 8460389.348 };
 
-/** KMZ «11has paracas». B easting 374552 (el CAD 374652 da 8.6 ha). */
 export const VERTICES = {
   A: { x: -6.921, y: -253.797, east: 374763.43, north: 8460135.551, label: "A", cardinal: "Sur" },
   B: { x: -218.318, y: -55.372, east: 374552.033, north: 8460333.976, label: "B", cardinal: "Oeste" },
@@ -29,14 +28,16 @@ export const VERTICES = {
 } as const;
 
 export const RING: Vec[] = [VERTICES.A, VERTICES.B, VERTICES.C, VERTICES.D];
-
-/** Elipse ≈ 20 662 m² (π · 90 · 73). */
-export const OASIS = { x: 0, y: 0, rx: 90, ry: 73 };
+export const OASIS = { x: 0, y: 8, rx: 90, ry: 73 };
 export const PERIMETER_SETBACK = 10;
 export const STREET = 6;
 export const LOT_FRONT = 8;
 export const LOT_DEPTH = 15;
 export const LOT_GAP = 0.7;
+
+/** Eje de lotes: Este = +X, Norte = +Y. Nada de diagonal BD. */
+export const U_HAT: Vec = { x: 1, y: 0 };
+export const V_HAT: Vec = { x: 0, y: 1 };
 
 export function dist(a: Vec, b: Vec) {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -97,22 +98,42 @@ export function insetPolygon(poly: Vec[], d: number): Vec[] {
   }
   return out;
 }
+
+function horizontalChord(y: number): { west: Vec; east: Vec } {
+  const hits: Vec[] = [];
+  for (let i = 0; i < RING.length; i++) {
+    const a = RING[i];
+    const b = RING[(i + 1) % RING.length];
+    const hit = intersectSegments(a, b, { x: -400, y }, { x: 400, y });
+    if (!hit) continue;
+    const on =
+      hit.x >= Math.min(a.x, b.x) - 0.05 &&
+      hit.x <= Math.max(a.x, b.x) + 0.05 &&
+      hit.y >= Math.min(a.y, b.y) - 0.05 &&
+      hit.y <= Math.max(a.y, b.y) + 0.05;
+    if (on) hits.push(hit);
+  }
+  hits.sort((p, q) => p.x - q.x);
+  return { west: hits[0] ?? { x: -40, y }, east: hits[hits.length - 1] ?? { x: 40, y } };
+}
+
 export const DIAGONAL_CROSS = intersectSegments(VERTICES.A, VERTICES.C, VERTICES.B, VERTICES.D) ?? { x: 0, y: 0 };
 export const INSET_RING = insetPolygon(RING, PERIMETER_SETBACK);
 
-const AC = norm({ x: VERTICES.C.x - VERTICES.A.x, y: VERTICES.C.y - VERTICES.A.y });
-const AC_PERP = { x: -AC.y, y: AC.x };
-/** Franja de acceso: 52 m desde A hacia C. */
-export const SOUTH_GATE_S = 52;
-export function fromA(s: number, t: number): Vec {
-  return {
-    x: VERTICES.A.x + AC.x * s + AC_PERP.x * t,
-    y: VERTICES.A.y + AC.y * s + AC_PERP.y * t,
-  };
+/** Frontis Sur: corte horizontal, no el pico A ni el eje AC. */
+export const SOUTH_GATE_Y = -206;
+export const FRONT_CHORD = horizontalChord(SOUTH_GATE_Y);
+export const GATE: Vec = {
+  x: (FRONT_CHORD.west.x + FRONT_CHORD.east.x) / 2,
+  y: SOUTH_GATE_Y,
+};
+
+/** north = metros al norte del frontis, east = metros al este del pórtico. */
+export function fromFront(north: number, east: number): Vec {
+  return { x: GATE.x + east, y: SOUTH_GATE_Y + north };
 }
 export function southOfGate(p: Vec) {
-  const s = (p.x - VERTICES.A.x) * AC.x + (p.y - VERTICES.A.y) * AC.y;
-  return s < SOUTH_GATE_S;
+  return p.y < SOUTH_GATE_Y;
 }
 export function inOasis(p: Vec, pad = 0) {
   const nx = (p.x - OASIS.x) / (OASIS.rx + pad);
