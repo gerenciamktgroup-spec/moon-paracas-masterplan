@@ -1,5 +1,5 @@
 import type { Vec } from "./loteMatriz";
-import { fromA } from "./loteMatriz";
+import { fromFront } from "./loteMatriz";
 
 export type AmenityCategory =
   | "oasis"
@@ -24,7 +24,7 @@ const q = (n: number) => Math.round(n * 1000) / 1000;
 const deg = (d: number) => (d * Math.PI) / 180;
 const ring = (angle: number, r: number): Vec => ({
   x: q(Math.cos(deg(angle)) * r),
-  y: q(Math.sin(deg(angle)) * r),
+  y: q(8 + Math.sin(deg(angle)) * r),
 });
 
 export const AMENITIES: MasterplanAmenity[] = [
@@ -35,15 +35,15 @@ export const AMENITIES: MasterplanAmenity[] = [
     category: "oasis",
     categoryLabel: "Agua",
     anchor: ring(248, 42),
-    blurb: "Piscina en el borde sur de la laguna, dentro del oasis de 20.662 m\u00b2.",
-    details: ["Deck sol\u00e1rium", "Agua climatizada"],
+    blurb: "Piscina al sur de la laguna, dentro del oasis.",
+    details: ["Deck solárium", "Agua climatizada"],
   },
   {
     id: "bar-lounge",
     name: "Bar & Lounge",
     shortLabel: "Bar & Lounge",
     category: "gastronomia",
-    categoryLabel: "Gastronom\u00eda",
+    categoryLabel: "Gastronomía",
     anchor: ring(90, 38),
     blurb: "Terraza al norte de la laguna.",
     details: ["Terraza elevada", "Cocina Paracas"],
@@ -65,7 +65,7 @@ export const AMENITIES: MasterplanAmenity[] = [
     category: "wellness",
     categoryLabel: "Wellness",
     anchor: ring(140, 44),
-    blurb: "Hamacas bajo palmeras, dentro del anillo del oasis.",
+    blurb: "Hamacas bajo palmeras.",
     details: ["Hamacas", "Sombra"],
   },
   {
@@ -75,7 +75,7 @@ export const AMENITIES: MasterplanAmenity[] = [
     category: "recreacion",
     categoryLabel: "Noche",
     anchor: ring(20, 42),
-    blurb: "Firepits para astroturismo al este del lago.",
+    blurb: "Firepits al este del lago.",
     details: ["3 firepits", "Cielo de Paracas"],
   },
   {
@@ -85,18 +85,18 @@ export const AMENITIES: MasterplanAmenity[] = [
     category: "recreacion",
     categoryLabel: "Familia",
     anchor: ring(310, 42),
-    blurb: "Juegos de madera sobre arena, dentro del oasis.",
+    blurb: "Juegos de madera sobre arena.",
     details: ["Madera", "Sombra continua"],
   },
   {
     id: "portico",
-    name: "P\u00f3rtico de Ingreso 24/7",
-    shortLabel: "P\u00f3rtico",
+    name: "Pórtico de Ingreso 24/7",
+    shortLabel: "Pórtico",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: fromA(18, 0),
-    blurb: "Control monumental en el eje AC. No ocupa lotes.",
-    details: ["Doble carril", "Seguridad 24/7"],
+    anchor: fromFront(8, 0),
+    blurb: "Puerta al centro del frontis Sur, no en el pico A.",
+    details: ["Eje del corte horizontal", "Doble carril", "Seguridad 24/7"],
   },
   {
     id: "welcome",
@@ -104,8 +104,8 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Welcome",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: fromA(22, -28),
-    blurb: "Recepci\u00f3n a la izquierda del p\u00f3rtico.",
+    anchor: fromFront(12, -28),
+    blurb: "Recepción a la izquierda del pórtico.",
     details: ["Concierge", "Carritos"],
   },
   {
@@ -114,19 +114,19 @@ export const AMENITIES: MasterplanAmenity[] = [
     shortLabel: "Lobby",
     category: "acceso",
     categoryLabel: "Acceso",
-    anchor: fromA(22, 28),
-    blurb: "Showroom a la derecha del p\u00f3rtico.",
-    details: ["Showroom", "Atenci\u00f3n comercial"],
+    anchor: fromFront(12, 28),
+    blurb: "Showroom a la derecha del pórtico.",
+    details: ["Showroom", "Atención comercial"],
   },
   {
     id: "cocheras",
-    name: "Cochera Plus \u00b7 192 plazas",
+    name: "Cochera Plus · 192 plazas",
     shortLabel: "Cochera Plus",
     category: "estacionamiento",
     categoryLabel: "Servicios",
-    anchor: fromA(36, 0),
-    blurb: "Cuatro bah\u00edas a lo largo de la franja Sur, no en el pico del diamante.",
-    details: ["192 plazas", "4 bah\u00edas", "Carga el\u00e9ctrica"],
+    anchor: fromFront(28, 0),
+    blurb: "Cuatro bahías sobre el frontis, simétricas al pórtico.",
+    details: ["192 plazas", "4 bahías"],
   },
 ];
 
@@ -135,7 +135,7 @@ export function organicLagoonPath(rx = 38, ry = 28, waves = 6) {
   for (let i = 0; i <= 48; i++) {
     const t = (i / 48) * Math.PI * 2;
     const k = 1 + 0.07 * Math.sin(t * waves) + 0.04 * Math.cos(t * 3);
-    pts.push({ x: q(Math.cos(t) * rx * k), y: q(Math.sin(t) * ry * k) });
+    pts.push({ x: q(Math.cos(t) * rx * k), y: q(8 + Math.sin(t) * ry * k) });
   }
   return pts;
 }
@@ -145,7 +145,7 @@ export function palmPositions(): Vec[] {
   for (let i = 0; i < 28; i++) {
     const t = (i / 28) * Math.PI * 2 + 0.15;
     const k = 1 + (i % 3) * 0.04;
-    palms.push({ x: q(Math.cos(t) * 62 * k), y: q(Math.sin(t) * 50 * k) });
+    palms.push({ x: q(Math.cos(t) * 62 * k), y: q(8 + Math.sin(t) * 50 * k) });
   }
   return palms;
 }
